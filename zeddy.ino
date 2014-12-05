@@ -22,8 +22,9 @@
  Nov 23, 2010
  */
 #include <Wtv020sd16p.h>
-#include "pitches.h"
+//#include "pitches.h"
 int led = 11;
+int motorPin = 13;
 long randNumber;
 
 int resetPin = 2;  // The pin number of the reset pin.
@@ -35,13 +36,13 @@ Wtv020sd16p wtv020sd16p(resetPin,clockPin,dataPin,busyPin);
 
 const int NLEDS = 4; 
 const int LEDPINS[NLEDS] = {
-  6,7,9,10}; // Need to be PWM pins, and we need 3 and 11 free (for tone())
+  6.7,9,10}; // Need to be PWM pins, and we need 3 and 11 free (for tone())
 const int SWITCHPINS[NLEDS] = {
   15,16,17,18}; // Analog inputs 1-4
 const int SWITCHPRESSED = 1; // 1 or 0, for normally-open/closed switches
-const int SPEAKERPIN = 8;
+//const int SPEAKERPIN = 8;
 const int NOTES[NLEDS] = {
-  NOTE_C4, NOTE_D4, NOTE_E4, NOTE_F4};
+  0, 0, 0, 0};
 
 const int FADESTEPS = 8;
 const int FADEINDURATION = 200;
@@ -83,24 +84,24 @@ int LEDSONG[][3] = {
   ,{ENDOFSONG,ENDOFSONG,ENDOFSONG}
 };
 
-int WINSONG[][3] = {
-  {SILENCE,2,ALLLEDS}
-  ,{NOTE_E4,1,2}
-  ,{NOTE_E4,1,2}
-  ,{NOTE_E4,1,2}
-  ,{NOTE_F4,1,3}
-  ,{NOTE_E4,1,2}
-  ,{NOTE_D4,3,1}
-  ,{NOTE_G4,1,ALLLEDS}
-  ,{NOTE_G4,1,ALLLEDS}
-  ,{NOTE_G4,1,ALLLEDS}
-  ,{NOTE_A4,2,ALLLEDS}
-  ,{NOTE_G4,5,ALLLEDS}
-  ,{ENDOFSONG,ENDOFSONG,ENDOFSONG}
-};
+//int WINSONG[][3] = {
+//  {SILENCE,2,ALLLEDS}
+//  ,{SILENCE,1,2}
+//  ,{SILENCE,1,2}
+//  ,{SILENCE,1,2}
+//  ,{SILENCE,1,3}
+//  ,{SILENCE,1,2}
+//  ,{SILENCE,3,1}
+//  ,{SILENCE,1,ALLLEDS}
+//  ,{SILENCE,1,ALLLEDS}
+//  ,{SILENCE,1,ALLLEDS}
+//  ,{SILENCE,2,ALLLEDS}
+//  ,{SILENCE,5,ALLLEDS}
+//  ,{ENDOFSONG,ENDOFSONG,ENDOFSONG}
+//};
 
 int LOSESONG[][3] = {
-  {NOTE_B5,2,3},{NOTE_A5,2,2},{NOTE_GS5,2,1},{NOTE_G5,8,ALLLEDS},{ENDOFSONG,ENDOFSONG,ENDOFSONG}
+  {SILENCE,2,3},{SILENCE,2,2},{SILENCE,2,1},{SILENCE,8,ALLLEDS},{ENDOFSONG,ENDOFSONG,ENDOFSONG}
 };
 
 void setup() {
@@ -111,17 +112,19 @@ void setup() {
   // Analog in 0 should *not* be connected.
   // It's mama's little PRNG :)
   randomSeed(analogRead(0));
-  pinMode(SPEAKERPIN,OUTPUT);
-  noTone(SPEAKERPIN);
+  //pinMode(SPEAKERPIN,OUTPUT);
+  //noTone(SPEAKERPIN);
   gameLevel=MINLEVEL;
   for (byte l=0; l<NLEDS; l++) {
     pinMode(LEDPINS[l], OUTPUT);
-    pinMode(led, OUTPUT);     
+    pinMode(led, OUTPUT);  
+    pinMode(motorPin, OUTPUT);     
+   
 
   }
   //Serial.begin(9600);
   // Visual feedback after reset. Also good as a cable check :)
-  playLedSequence(); 
+//  playLedSequence(); 
 }
 
 void loop() {
@@ -141,8 +144,8 @@ void loop() {
     } 
     else {
       
-            randNumber = random(0, 3);
-            wtv020sd16p.playVoice(randNumber); //  Aldo: Lose sequence sounds
+      //      randNumber = random(0, 3);
+       //     wtv020sd16p.playVoice(randNumber); //  Aldo: Lose sequence sounds - Now in Lose Func
             playLoseSequence(); // OG
             eyes(); // Erratic eye blink
       
@@ -151,14 +154,16 @@ void loop() {
 }
 
 void eyes () {
-        for (int i=0; i <= 25; i++){
+        for (int i=0; i <= 75; i++){
           
-          if (i < 25) 
+          if (i < 75) 
             randNumber = random(10, 150);
 
               digitalWrite(led, HIGH);
+              digitalWrite(motorPin, HIGH);
               delay(randNumber);
               digitalWrite(led, LOW);
+              digitalWrite(motorPin, LOW);
               delay(randNumber);
            }  // Aldo: Erratic eye blink
 }
@@ -202,11 +207,12 @@ void fadeLed(int theLed,int val,int duration) {
 }
 
 void playLed(int theLed) { // Fade LED and play its note
-  tone(SPEAKERPIN,NOTES[theLed]);
+ // tone(SPEAKERPIN,NOTES[theLed]);
   fadeLed(theLed,HIGH,FADEINDURATION); // Fade in
-  noTone(SPEAKERPIN);
+ // noTone(SPEAKERPIN);
   fadeLed(theLed,LOW,FADEOUTDURATION); // Fade out
-  wtv020sd16p.playVoice(theLed); // Aldo: Audio track # to led pin # 6, 7, 9, 10
+  wtv020sd16p.playVoice(LEDPINS[theLed]); // Aldo: Audio track # to led pin # 6, 7, 9, 10
+  delay(1350);
 }
 
 int playerGuess(int gameLevel) {
@@ -225,30 +231,18 @@ int playerGuess(int gameLevel) {
   return 1;
 }
 
-void playSong(int song[][3]) {
-  for (int note=0; song[note][NOTETONE]!=ENDOFSONG; note++) {
-    int theDuration=SINGLEBEAT*song[note][NOTEDURATION];
-    int theTone=song[note][NOTETONE];
-    if (theTone) {
-      tone(SPEAKERPIN,theTone);
-    }
-    int theLed=song[note][NOTELED];
-    fadeLed(theLed,HIGH,theDuration); // Fade in
-    noTone(SPEAKERPIN);
-    fadeLed(theLed,LOW,theDuration*PAUSEFACTOR); // Fade out + silence between note
-  }
-}
 
-int playLedSequence() {
-  playSong(LEDSONG);
-}
 
 int playWinSequence() {
-  playSong(WINSONG);
+            wtv020sd16p.playVoice(8); //  Aldo: Lose sequence sounds
+
 }
 
 int playLoseSequence() {
-  playSong(LOSESONG);
+            randNumber = random(0, 3);
+
+            wtv020sd16p.playVoice(randNumber); //  Aldo: Lose sequence sounds
+
 }
 
 int getSwitchStroke() {
