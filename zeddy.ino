@@ -1,5 +1,8 @@
-
-/* Simon Sings - a memory game for 4 leds, 4 switches and a buzzer.
+/*
+A version with sound for every button using the WTV020 shound module. 
+By: Aldo Padilla 12-05-14
+Building off the code from...
+Simon Sings - a memory game for 4 leds, 4 switches and a buzzer.
  "Sings" is the sound-enhanced version of "Fairly Simple Simon".
  No relation to the Singh family :)
  
@@ -234,7 +237,7 @@ int playerGuess(int gameLevel) {
 
 
 int playWinSequence() {
-            wtv020sd16p.playVoice(8); //  Aldo: Lose sequence sounds
+            wtv020sd16p.playVoice(8); //  Aldo: Win sequence sounds
 
 }
 
@@ -242,7 +245,6 @@ int playLoseSequence() {
             randNumber = random(0, 3);
 
             wtv020sd16p.playVoice(randNumber); //  Aldo: Lose sequence sounds
-
 }
 
 int getSwitchStroke() {
